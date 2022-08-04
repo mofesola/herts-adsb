@@ -1,76 +1,81 @@
-mapping = {
+{
     "settings": {
-        "number_of_shards": 2,
-        "number_of_replicas": 1
+      "number_of_shards": 2,
+      "number_of_replicas": 1
     },
     "mappings": {
-        "properties": {
-			"transmission_type": {
-                "type": "integer"
-            },
-            "session_id": {
-                "type": "text"
-            },
-			"aircraft_id": {
-                "type": "text"
-            },
-			"hex_ident": {
-                "type": "text"
-            },
-			"flight_id": {
-                "type": "text"
-            },
-			"generated_date": {
-                "type": "date"
-            },
-			"generated_time": {
-                "type": "date"
-            },
-			"logged_date": {
-                "type": "date"
-            },
-			"logged_time": {
-                "type": "date"
-            },
-			"callsign": {
-                "type": "text"
-            },
-			"altitude": {
-                "type": "integer"
-            },
-			"ground_speed": {
-                "type": "integer"
-            },
-			"track": {
-                "type": "integer"
-            },
-			"lat": {
-                "type": "geo_point"
-            },
-			"lon": {
-                "type": "geo_point"
-            },
-			"vertical_rate": {
-                "type": "integer"
-            },
-			"squawk": {
-                "type": "text"
-            },
-			"alert": {
-                "type": "integer"
-            },
-			"emergency": {
-                "type": "integer"
-            },
-			"spi": {
-                "type": "integer"
-            },
-			"is_on_ground": {
-                "type": "integer"
-            },
-            "parsed_time": {
-                "type": "text"
-            }
+      "properties": {
+        "message_type": {
+          "type": "text"
+        },
+        "transmission_type": {
+          "type": "integer"
+        },
+        "session_id": {
+          "type": "text"
+        },
+        "aircraft_id": {
+          "type": "text"
+        },
+        "hex_ident": {
+          "type": "text"
+        },
+        "flight_id": {
+          "type": "text"
+        },
+        "generated_date": {
+          "type": "date",
+          "format": "yyyy/MM/dd"
+        },
+        "generated_time": {
+          "type": "date",
+          "format": "HH:mm:ss.SSS"
+        },
+        "logged_date": {
+          "type": "date",
+          "format": "yyyy/MM/dd"
+        },
+        "logged_time": {
+          "type": "date",
+          "format": "HH:mm:ss.SSS"
+        },
+        "callsign": {
+          "type": "text"
+        },
+        "altitude": {
+          "type": "integer"
+        },
+        "ground_speed": {
+          "type": "integer"
+        },
+        "track": {
+          "type": "integer"
+        },
+        "location": {
+          "type": "geo_point"
+        },
+        "vertical_rate": {
+          "type": "integer"
+        },
+        "squawk": {
+          "type": "text"
+        },
+        "alert": {
+          "type": "integer"
+        },
+        "emergency": {
+          "type": "integer"
+        },
+        "spi": {
+          "type": "integer"
+        },
+        "is_on_ground": {
+          "type": "integer"
+        },
+        "parsed_time": {
+          "type": "date",
+          "format": "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
         }
+      }
     }
-}
+  }

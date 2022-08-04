@@ -2,115 +2,21 @@ import datetime
 import time
 from datetime import time
 import socket
-import sqlite3
-import argparse
-import os
 from elastic import Elastic
-
-# defaults
-HOST = "piaware.local"
-ES_HOST=os.getenv('ES_HOST', '127.0.0.1')
-PORT = 30003
-DB = "adsb_messages.db"
-BUFFER_SIZE = 100
-BATCH_SIZE = 1
-CONNECT_ATTEMPT_LIMIT = 10
-CONNECT_ATTEMPT_DELAY = 5.0
+from common import Common
 
 
 def main():
 
-	# set up command line options
-	parser = argparse.ArgumentParser(
-	    description="A program to process dump1090 messages then insert them into a database")
-	parser.add_argument("-l", "--location", type=str, default=HOST,
-	                    help="This is the network location of your dump1090 broadcast. Defaults to %s" % (HOST,))
-	parser.add_argument("-p", "--port", type=int, default=PORT,
-	                    help="The port broadcasting in SBS-1 BaseStation format. Defaults to %s" % (PORT,))
-	parser.add_argument("-d", "--database", type=str, default=DB,
-	                    help="The location of a database file to use or create. Defaults to %s" % (DB,))
-	parser.add_argument("--buffer-size", type=int, default=BUFFER_SIZE,
-	                    help="An integer of the number of bytes to read at a time from the stream. Defaults to %s" % (BUFFER_SIZE,))
-	parser.add_argument("--batch-size", type=int, default=BATCH_SIZE,
-	                    help="An integer of the number of rows to write to the database at a time. If you turn off WAL mode, a lower number makes it more likely that your database will be locked when you try to query it. Defaults to %s" % (BATCH_SIZE,))
-	parser.add_argument("--connect-attempt-limit", type=int, default=CONNECT_ATTEMPT_LIMIT,
-	                    help="An integer of the number of times to try (and fail) to connect to the dump1090 broadcast before qutting. Defaults to %s" % (CONNECT_ATTEMPT_LIMIT,))
-	parser.add_argument("--connect-attempt-delay", type=float, default=CONNECT_ATTEMPT_DELAY,
-	                    help="The number of seconds to wait after a failed connection attempt before trying again. Defaults to %s" % (CONNECT_ATTEMPT_DELAY,))
-
-	# parse command line options
-	args = parser.parse_args()
-
-	# print args.accumulate(args.in)
 	count_since_commit = 0
 	count_total = 0
 	failed_attempts = 1
-
-	# connect to database or create if it doesn't exist
-	conn = sqlite3.connect(args.database)
-	cur = conn.cursor()
-	cur.execute('PRAGMA journal_mode=wal')
-
-	# set up the table if neccassary
-	cur.execute("""CREATE TABLE IF NOT EXISTS
-		squitters(
-			message_type TEXT,
-			transmission_type INT,
-			session_id TEXT,
-			aircraft_id TEXT,
-			hex_ident TEXT,
-			flight_id TEXT,
-			generated_date TEXT,
-			generated_time TEXT,
-			logged_date TEXT,
-			logged_time TEXT,
-			callsign TEXT,
-			altitude INT,
-			ground_speed INT,
-			track INT,
-			lat REAL,
-			lon REAL,
-			vertical_rate REAL,
-			squawk TEXT,
-			alert INT,
-			emergency INT,
-			spi INT,
-			is_on_ground INT,
-			parsed_time TEXT
-		);
-	""")
-
-	cur.execute("""
-			CREATE VIEW IF NOT EXISTS callsigns AS
-			  SELECT callsign, hex_ident, date(parsed_time) date_seen, max(parsed_time) last_seen, min(parsed_time) first_seen
-				FROM squitters
-				WHERE callsign != ""
-				GROUP BY callsign, hex_ident, date_seen;
-
-	""")
-
-	cur.execute("""
-			CREATE VIEW IF NOT EXISTS locations AS
-			  SELECT hex_ident, parsed_time, lon, lat, altitude
-				FROM squitters WHERE lat != "";
-	""")
-
-	cur.execute("""
-			CREATE VIEW IF NOT EXISTS flights AS
-			  SELECT DISTINCT l.*, cs.callsign
-				FROM locations l JOIN callsigns cs
-				  ON (l.hex_ident = cs.hex_ident
-					  and l.parsed_time <= strftime('%Y-%m-%dT%H:%M:%S',cs.last_seen, "10 minutes")
-					  and l.parsed_time >= strftime('%Y-%m-%dT%H:%M:%S',cs.first_seen,"-10 minutes"));
-
-	""")
-
 	start_time = datetime.datetime.utcnow()
 
 	# open a socket connection
-	while failed_attempts < args.connect_attempt_limit:
+	while failed_attempts < Common().connect_attempt_limit():
 		try:
-			s = socket_connection(args.location, args.port)
+			s = socket_connection(Common().host(), Common().port())
 			failed_attempts = 1
 			print("Connected to HertsPi broadcast")
 			break
@@ -118,7 +24,7 @@ def main():
 			failed_attempts += 1
 			print("Cannot connect to HertsPi broadcast. This is retry %s." %
 			      (failed_attempts))
-			time.sleep(args.connect_attempt_delay)
+			time.sleep(Common().connect_attempt_delay())
 	else:
 		quit()
 
@@ -136,7 +42,7 @@ def main():
 			# receive a stream message
 			try:
 				message = ""
-				message = s.recv(args.buffer_size)
+				message = s.recv(Common().buffer_size())
 				data_str += message.decode().strip("\n")
 			except socket.error:
 				# Connection to the socket failed, then skip
@@ -144,12 +50,12 @@ def main():
 
 			if len(message) == 0:
 				print(ts, "No broadcast received. Attempting to reconnect")
-				time.sleep(args.connect_attempt_delay)
+				time.sleep(Common().connect_attempt_delay())
 				s.close()
 
-				while failed_attempts < args.connect_attempt_limit:
+				while failed_attempts < Common().connect_attempt_limit():
 					try:
-						s = socket_connection(args.location, args.port)
+						s = socket_connection(Common().host(), Common().port())
 						failed_attempts = 1
 						print("Reconnected!")
 						break
@@ -157,7 +63,7 @@ def main():
 						failed_attempts += 1
 						print("The attempt failed. Making attempt %s." %
 						      (failed_attempts))
-						time.sleep(args.connect_attempt_delay)
+						time.sleep(Common().connect_attempt_delay())
 				else:
 					quit()
 
@@ -176,56 +82,20 @@ def main():
 
 					# add the current time to the row
 					line.append(ds)
-					print(line)
-					try:
-						# add the row to the db
-						cur.executemany("""INSERT INTO squitters
-							(
-								message_type,
-								transmission_type,
-								session_id,
-								aircraft_id,
-								hex_ident,
-								flight_id,
-								generated_date,
-								generated_time,
-								logged_date,
-								logged_time,
-								callsign,
-								altitude,
-								ground_speed,
-								track,
-								lat,
-								lon,
-								vertical_rate,
-								squawk,
-								alert,
-								emergency,
-								spi,
-								is_on_ground,
-								parsed_time
-							)
-							VALUES (""" + ", ".join(["?"] * len(line)) + ")", (line,))
+					if (line[14] == ""):					
+						line[14] = 0
+						line[15] = 0
+					
+					if line[21] == ' \r' or line[21] == '\r':					
+						line[21] = '1\r'
 
+					#Insert into Elasticsearch
+					Elastic().insert(Elastic().format(line))
+					
 						# increment counts
-						count_total += 1
-						count_since_commit += 1
-
-						# commit the new rows to the database in batches
-						if count_since_commit % args.batch_size == 0:
-							conn.commit()
-							if cur_time != last_time:
-								print("averging %s rows per second, currently %s rows per second" % (float(count_total) / (cur_time - start_time).total_seconds(),float(count_since_commit) / (cur_time - last_time).total_seconds()))
-							else:
-								print("averging %s rows per second" % (float(count_total) / (cur_time - start_time).total_seconds(),))
-							if count_since_commit > args.batch_size:
-								print(ts,"All caught up, %s rows, successfully written to database" % (count_since_commit))
-							count_since_commit = 0
-							last_time = cur_time
-
-					except sqlite3.OperationalError:
-						print(ts, "Could not write to database, will try to insert %s rows on next commit" % (count_since_commit + args.batch_size,))
-
+						
+					count_total += 1
+					count_since_commit += 1
 
 					# since everything was valid we reset the stream message
 					data_str = ""
@@ -237,19 +107,8 @@ def main():
 	except KeyboardInterrupt:
 		print("\n%s Closing connection" % (ts,))
 		s.close()
+		print(ts, "%s datapoints added to your database, %s" % (count_total, Common().es_index(),))
 
-		conn.commit()
-		conn.close()
-		print(ts, "%s squitters added to your database" % (count_total,))
-
-	except sqlite3.ProgrammingError:
-		print("Error with ", line)
-		quit()
-
-
-def push_to_elastic():
-    print("here")
-    Elastic().create_index(self)
 
 def socket_connection(loc,port):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -257,6 +116,4 @@ def socket_connection(loc,port):
 	return s
 
 if __name__ == '__main__':
-	#main()
-	print("now")
-	push_to_elastic()
+	main()
