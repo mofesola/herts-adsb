@@ -1,6 +1,5 @@
 import datetime
 import time
-from datetime import time
 import socket
 from elastic import Elastic
 from common import Common
@@ -16,6 +15,7 @@ def main():
 	# open a socket connection
 	while failed_attempts < Common().connect_attempt_limit():
 		try:
+			Common().log_config()
 			s = socket_connection(Common().host(), Common().port())
 			failed_attempts = 1
 			print("Connected to HertsPi broadcast")

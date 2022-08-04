@@ -8,7 +8,7 @@
         "message_type": {
           "type": "text"
         },
-        "transmission_type": {
+        "transmission": {
           "type": "integer"
         },
         "session_id": {

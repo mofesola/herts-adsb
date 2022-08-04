@@ -29,5 +29,18 @@ class Common:
         return int(os.getenv('CONNECT_ATTEMPT_LIMIT', 10))
 
     def connect_attempt_delay(self):
-        return int(os.getenv('CONNECT_ATTEMPT_DELAY', 5.0))
+        return int(os.getenv('CONNECT_ATTEMPT_DELAY', 5))
+
+    def log_config(self):
+        print(
+            self.host(), '\n',
+            self.port(), '\n',
+            self.es_host(), '\n',
+            self.es_port(), '\n',
+            self.es_index(), '\n',
+            self.buffer_size(), '\n',
+            self.batch_size(), '\n',
+            self.connect_attempt_limit(), '\n',
+            self.connect_attempt_delay(), '\n',
+        )
 

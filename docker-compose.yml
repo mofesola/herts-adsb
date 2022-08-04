@@ -100,9 +100,13 @@ services:
     container_name: kibana
     env_file:
       - .env
+    volumes:
+      - kibanadata:/usr/share/kibana/data
     environment:
-      SERVER_NAME: kibana.local
-      ELASTICSEARCH_URL: http://es01:9200
+      - SERVER_NAME=kibana
+      - ELASTICSEARCH_HOSTS=http://es01:9200
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
     ports:
       - ${KIBANA_PORT}:5601
     networks:
@@ -129,6 +133,8 @@ services:
       es03:
         condition: service_healthy
     restart: "unless-stopped"
+    networks:
+      - esnet
 
     env_file:
       - .env
@@ -138,6 +144,8 @@ volumes:
   esdata2:
     driver: local
   esdata3:
+    driver: local
+  kibanadata:
     driver: local
 
 networks:
