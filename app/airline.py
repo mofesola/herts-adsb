@@ -3,7 +3,7 @@ import elasticsearch
 import json
 from common import Common
 
-class Elastic:
+class Airline:
     def __init__(self) -> None:
         self.host = Common().es_host()
         self.port = Common().es_port()
@@ -11,8 +11,19 @@ class Elastic:
         self.es = Elasticsearch('http://'+self.host+':'+self.port, timeout=30, max_retries=10, retry_on_timeout=True)
     
     def mappings(self):
-        f = open('config/mapping.json')
+        f = open('config/aircraftdb-mapping.json')
         return json.load(f)
+    
+    def aircraftdb(self):
+        f = open('dataset/aircraftdb.csv', 'r', encoding='utf-8')
+        return f.readlines()
+    
+    def load_data(self):
+        self.create_index()
+        if self.index_size() < 450000:
+            for line in self.aircraftdb():
+                es_object = self.format([x.strip('\"') for x in line.strip().split(',')])
+                self.insert(es_object)
 
     def create_index(self):
         if not self.es.indices.exists(index=self.index):
@@ -34,6 +45,9 @@ class Elastic:
 
         return True
 
+    def index_size(self):
+        return int(self.es.cat.count(index=self.index, params={"format": "json"})[0]['count'])
+
     def insert(self, data):
         if self.create_index():
             try:
@@ -47,29 +61,20 @@ class Elastic:
 
     def format(self, data):
         data_map = {}
-        data_map["message_type"] = data[0]
-        data_map["transmission"] = data[1]
-        data_map["session_id"] = data[2]
-        data_map["aircraft_id"] = data[3]
-        data_map["hex_ident"] = data[4]
-        data_map["flight_id"] = data[5]
-        data_map["generated_date"] = data[6]
-        data_map["generated_time"] = data[7]
-        data_map["logged_date"] = data[8]
-        data_map["logged_time"] = data[9]
-        data_map["callsign"] = data[10]
-        data_map["altitude"] = data[11]
-        data_map["ground_speed"] = data[12]
-        data_map["track"] = data[13]
-        data_map["location"] = {"lat": float(data[14]), "lon" : float(data[15])}
-        data_map["vertical_rate"] = data[16]
-        data_map["squawk"] = data[17]
-        data_map["alert"] = data[18]
-        data_map["emergency"] = data[19]
-        data_map["spi"] = data[20]
-        data_map["is_on_ground"] = data[21]
-        data_map["parsed_time"] = data[22]
-
-        print(data_map)
+        data_map["hex_ident"] = data[0].upper()
+        data_map["registration"] = data[1]
+        data_map["manufacturer"] = data[2]
+        data_map["icao_manufacturer"] = data[3]
+        data_map["model"] = data[4]
+        data_map["icao_model"] = data[5]
+        data_map["serial_number"] = data[6]
+        data_map["line_number"] = data[7]
+        data_map["icao_classification"] = data[8]
+        data_map["owner"] = data[9]
+        data_map["airline_callsign"] = data[10]
+        data_map["airline_icao"] = data[11]
+        data_map["airline_iata"] = data[12]
+        data_map["operator"] = data[13]
+        data_map["comments"] = data[13]
         
         return data_map

@@ -18,6 +18,9 @@ class Common:
 
     def es_index(self):
         return os.getenv('ES_INDEX', 'herts_adsb')
+    
+    def es_airline_index(self):
+        return os.getenv('ES_AIRLINE_INDEX', 'airline_data')
 
     def buffer_size(self):
         return int(os.getenv('BUFFER_SIZE', 100))

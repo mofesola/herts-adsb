@@ -1,0 +1,55 @@
+{
+    "settings": {
+      "number_of_shards": 2,
+      "number_of_replicas": 1
+    },
+    "mappings": {
+      "properties": {
+        "hex_ident": {
+            "type": "keyword"
+        },
+        "registration": {
+            "type": "keyword"
+        },
+        "manufacturer": {
+            "type": "keyword"
+        },
+        "icao_manufacturer": {
+            "type": "keyword"
+        },
+        "model": {
+            "type": "keyword"
+        },
+        "icao_model": {
+            "type": "keyword"
+        },
+        "serial_number": {
+            "type": "keyword"
+        },
+        "line_number": {
+            "type": "keyword"
+        },
+        "icao_classification": {
+            "type": "keyword"
+        },
+        "owner": {
+            "type": "keyword"
+        },
+        "airline_callsign": {
+            "type": "keyword"
+        },
+        "airline_icao": {
+            "type": "keyword"
+        },
+        "airline_iata": {
+            "type": "keyword"
+        },
+        "operator": {
+            "type": "keyword"
+        },
+        "comments": {
+            "type": "text"
+        }
+      }
+    }
+  }
