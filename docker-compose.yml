@@ -125,6 +125,7 @@ services:
   
   app:
     build: .
+    command: [ 'python', 'app/main.py' ]
     depends_on:
       es01:
         condition: service_healthy

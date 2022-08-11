@@ -7,7 +7,7 @@ class Elastic:
     def __init__(self) -> None:
         self.host = Common().es_host()
         self.port = Common().es_port()
-        self.index = Common().es_airline_index()
+        self.index = Common().es_index()
         self.es = Elasticsearch('http://'+self.host+':'+self.port, timeout=30, max_retries=10, retry_on_timeout=True)
     
     def mappings(self):
@@ -37,7 +37,7 @@ class Elastic:
     def insert(self, data):
         if self.create_index():
             try:
-                response = self.es.index(index=self.index, body=data)
+                response = self.es.index(index=self.index, body=data, pipeline=1)
             except elasticsearch.ElasticsearchException as es1:
                 print(es1)
                 return False

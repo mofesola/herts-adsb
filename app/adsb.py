@@ -5,7 +5,7 @@ from elastic import Elastic
 from common import Common
 
 class Adsb:
-	def main():
+	def main(self):
 
 		count_since_commit = 0
 		count_total = 0
@@ -16,7 +16,7 @@ class Adsb:
 		while failed_attempts < Common().connect_attempt_limit():
 			try:
 				Common().log_config()
-				s = socket_connection(Common().host(), Common().port())
+				s = self.socket_connection(Common().host(), Common().port())
 				failed_attempts = 1
 				print("Connected to HertsPi broadcast")
 				break
@@ -55,7 +55,7 @@ class Adsb:
 
 					while failed_attempts < Common().connect_attempt_limit():
 						try:
-							s = socket_connection(Common().host(), Common().port())
+							s = self.socket_connection(Common().host(), Common().port())
 							failed_attempts = 1
 							print("Reconnected!")
 							break
@@ -110,7 +110,7 @@ class Adsb:
 			print(ts, "%s datapoints added to your database, %s" % (count_total, Common().es_index(),))
 
 
-	def socket_connection(loc,port):
+	def socket_connection(self,loc,port):
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.connect((loc, port))
 		return s

@@ -77,4 +77,6 @@ class Airline:
         data_map["operator"] = data[13]
         data_map["comments"] = data[13]
         
+        print(data_map)
+        
         return data_map
