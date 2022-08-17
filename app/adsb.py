@@ -86,7 +86,7 @@ class Adsb:
 							line[14] = 0
 							line[15] = 0
 						
-						if line[21] == ' \r' or line[21] == '\r':					
+						if line[21] == ' \r' or line[21] == '\r' or line[21] == '-\r':					
 							line[21] = '1\r'
 
 						#Insert into Elasticsearch
